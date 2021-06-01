@@ -1,17 +1,65 @@
 <html>
-  <body background="https://thumbs.dreamstime.com/z/abstract-sea-background-sandy-summer-beach-bokeh-lights-light-blue-sky-beautiful-texture-space-131428079.jpg">
+<head>
+<style>
+h1  {
+  color: black;
+  font-family: courier;
+  font-size: 40px;
+}
+p  {
+  color: white;
+  font-family: courier;
+  font-size: 20px;
+}
+.verticalcenter {
+    display: table-cell;
+    vertical-align: middle;
+}
+.verticaltop {
+    display: table-cell;
+    vertical-align: top;
+}
+</style>
+</head>
+  <body background="background.png">
     <center>
-	<table width="95%" height="95%">
-	<tr><td>
-		</br height="200">
-			<img src="Header.png">
-		</img>
-	  </td></tr>
-	  <tr><td>
-	  
-		<embed src="floodfill3d/FloodFill3D.html" width="95%" height="95%"></embed>
-	  </td></tr>
-	  </table>
+		<embed src="header.html" width="100%" height="150"></embed>
+
+		</hr>
+		
+		<table width="95%" height="512px">
+		
+			<tr>
+				<td>
+					<div class="verticaltop">
+						<h1>3D Flood Fill Web App</h1>
+						<embed src="floodfill3d/FloodFill3D.html" width="100%" height="400px"></embed>
+					</div>
+				</td>
+			
+				<td>
+					<div class="verticaltop">
+						<h1>Unfilled</h1>
+					</div>
+				</td>
+			
+			
+			</tr>
+			<tr>
+				<td>
+					<div class="verticaltop">
+						<h1>Unfilled</h1>
+					</div>
+				</td>
+					
+				<td>
+					<div class="verticaltop">
+						<h1>Unfilled</h1>
+					</div>
+				</td>
+			</tr>
+		</table>
+		
     </center>
   </body>
 </html>
