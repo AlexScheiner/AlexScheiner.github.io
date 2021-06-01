@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Model View/title>
+    <script  src="https://threejs.org/build/three.js"></script>
+    <script  src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src='https://threejs.org/examples/js/libs/dat.gui.min.js'></script>
+    <script  src= "https://threejs.org/examples/js/loaders/OBJLoader.js"> </script>
+    <script src= "https://threejs.org/examples/js/loaders/MTLLoader.js"> </script>
+    <script type='text/javascript' src="dat.gui.min.js"></script>
+    <script id="vertexShader" type="x-shader/x-vertex">
+      precision highp float;
+
+      attribute vec3 position;
+      attribute vec2 uv;
+      attribute vec3 normal;
+
+      uniform mat4 modelViewMatrix;
+      uniform mat4 projectionMatrix;
+      uniform mat3 normalMatrix;
+      varying vec3 pos;
+      varying vec2 vUV;
+      varying vec3 pos2;
+      varying mat3 viewMatrix;
+      varying vec3 vPosition;
+      varying vec3 vNormal;
+      void main()	{
+        vUV = uv;
+        pos2 = position;
+        viewMatrix = mat3(modelViewMatrix);
+        vNormal = normalize(normalMatrix*normal);
+        vec4 postemp = modelViewMatrix * vec4(position, 1.0);
+        pos = vec3(postemp) / postemp.w;
+        gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0 );
+        vPosition = position;
+      }
+    </script>
+
+    <script id="fragmentShader" type="x-shader/x-fragment">
+    #extension GL_OES_standard_derivatives : enable
+    precision highp float;
+
+
+    uniform sampler2D map;
+    uniform samplerCube refmap;
+    uniform sampler2D tNormal;
+    //uniform sampler2D map2;
+    //uniform vec3 mattColor;
+    varying vec3 vNormal;
+    varying vec3 pos;
+    varying vec2 vUV;
+    varying vec3 pos2;
+    varying mat3 viewMatrix;
+    varying vec3 vPosition;
+
+    const vec3 ligP = vec3(1.0,1.0,1.0);
+    uniform vec3 amb;
+    uniform vec3 dif;
+    uniform vec3 specC;
+    uniform vec3 power;
+    uniform vec3 camerapos;
+    uniform vec3 refIntensity;
+    uniform vec3 normalStrength;
+
+    void main() {
+
+        vec3 Q0 = dFdx(vPosition);
+        vec3 Q1 = dFdy(vPosition);
+        vec2 st0 = dFdx(vUV);
+        vec2 st1 = dFdy(vUV);
+        float denom = st1.t*st0.s - st0.t*st1.s;
+        float denomSign = sign(denom);
+        vec3 T = normalize((Q0*st1.t - Q1*st0.t)*denomSign);
+        vec3 B = normalize((-Q0*st1.s + Q1*st0.s)*denomSign);
+        vec3 N = normalize(vNormal);
+        vec3 mapN = texture2D(tNormal, vUV).xyz * 2.0 - 1.0;
+        mapN.xy *= (float(gl_FrontFacing)*2.0-1.0);
+        vec3 newN =  (normalize(mat3(T,B,N)*mapN*normalStrength.x+normalize(vNormal)*(1.0-normalStrength.x)));
+        vec3 normal = normalize(newN);
+
+        vec4 tex = texture2D(map,vUV);
+        vec3 lightDir = normalize(ligP - pos);
+        vec3 reflectDir = reflect(-lightDir, normal);
+        vec3 viewDir = normalize(-pos);
+        vec3 incident = camerapos - pos2;
+        vec3 reflectionVector = incident - (dot(incident, normal)*normal * 2.0);
+        vec3 R_in_worldspace = incident - normal*vec3(dot(viewMatrix[0],incident),dot(viewMatrix[1],incident),dot(viewMatrix[2],incident));
+        //vec3 reflectionVector = reflect(-viewDir, -normal);
+        vec4 ref = textureCube(refmap,R_in_worldspace);
+        float lam = max(dot(lightDir,normal), 0.1);
+        float specular = 0.0;
+        if(lam > 0.0) {
+           float specAngle = min(dot(reflectDir, viewDir), 1.0);
+           specular = pow(specAngle, sqrt(power.x)+1.0)/(power.x/25.0+1.0);
+        }
+        gl_FragColor = vec4(amb+lam*dif+specular*specC, 1.0);
+        gl_FragColor = tex*gl_FragColor;
+        gl_FragColor = gl_FragColor * (1.0-refIntensity.x) + ref * tex * refIntensity.x;
+    }
+     </script>
+
+    <script>
+       // Add your own Javascript code/methods here.
+
+       function rgbToHex(r, g, b) {
+           return 0xFFFFFF+r*32+g*16+b;
+       }
+      function mainFunction(){
+        let renderer = new THREE.WebGLRenderer( { antialias: true } );//let renderer = new THREE.WebGLRenderer();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setPixelRatio( window.devicePixelRatio );
+
+        renderer.setClearColor (0x888888, 1);
+        document.body.appendChild( renderer.domElement );
+
+        let scene = new THREE.Scene();
+
+        let aspect = window.innerWidth / window.innerHeight;
+        let camera = new THREE.PerspectiveCamera( 30, aspect, 1, 1000 );
+        camera.position.z = 5;
+        scene.add(camera);
+
+        let keyLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        keyLight.position.set(-5, 6, 4);
+
+        let fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        fillLight.position.set(4, 5, 4);
+
+        let backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        backLight.position.set(5, -2, -4);
+
+        scene.add(keyLight);
+        scene.add(fillLight);
+        scene.add(backLight);
+
+        let render = function () {
+            //requestAnimationFrame( render );
+           // model.rotation.y += 0.0025;
+            material.camerapos = camera.position;
+          renderer.render( scene, camera );
+        };
+          let loader2 =  new THREE.CubeTextureLoader()
+
+          loader2.setPath("./cubemap2/");
+
+          let textureCube = loader2.load( [
+
+              "posx.jpg", "negx.jpg",
+
+              "posy.jpg", "negy.jpg",
+
+              "posz.jpg", "negz.jpg"]
+
+          );
+        let model;
+         let  diffuse = {
+              r: 1.0,
+              g: 0.0,
+              b: 0.0
+          };
+
+          let  specular = {
+              r: 0.7,
+              g: 0.7,
+              b: 0.8
+          };
+
+          let  power = {
+              power: 12.4,
+              power2: 0.5,
+              powerN: 0.3
+          };
+         let diffusecol = new THREE.Vector3(diffuse.r, diffuse.g, diffuse.b);
+         let powP = new THREE.Vector3(power.power, 0.0, 0.0);
+          let powP2 = new THREE.Vector3(power.power2, 0.0, 0.0);
+          let powPN = new THREE.Vector3(power.powerN, 0.0, 0.0);
+          let speccol = new THREE.Vector3(specular.r, specular.g, specular.b);
+          let useCustom = true;
+          let customSwitch =
+          {
+              f: function () {
+                  useCustom = true;
+              },
+
+              g: function () {
+                  useCustom = false;
+              }
+          };
+          let dummy;
+        let cameraControls = new THREE.OrbitControls( camera, renderer.domElement  );
+        cameraControls.addEventListener("change",render,false)
+          let material = new THREE.RawShaderMaterial({
+              side: THREE.DoubleSide,
+              fragmentShader: document.getElementById('fragmentShader').textContent,
+              vertexShader: document.getElementById('vertexShader').textContent,
+              uniforms: {
+                  dif: { type: "v3", value: diffusecol },
+                  amb: { type: "v3", value: new THREE.Vector3(0.1,0.1,0.1) },
+                  specC: { type: "v3", value: speccol },
+                  power: { type: "v3", value: powP },
+                  refmap: { type: "t", value: textureCube},
+                  refIntensity: {type: "v3", value: powP2},
+                  normalStrength: {type: "v3", value: powPN},
+                  camerapos: { type: "v3", value: camera.position},
+                  map: {
+                      type: "t",
+                      value: new THREE.TextureLoader().load ("./textures/white.png")
+                  },
+                  tNormal: {
+                      type: "t",
+                      value: new THREE.TextureLoader().load ("./textures/Snow-Normal.png")
+                  },
+              }
+          });
+
+          let material2 = new THREE.MeshPhongMaterial({
+              color: diffusecol,
+              shininess: powP.x,
+              specular: speccol
+          });
+        // add your MTL and OBJ file loading related code.
+          // instantiate a loader
+// once material is read initiate the obj Loading
+          let objLoader = new THREE.OBJLoader();
+
+
+
+
+
+          scene.background = textureCube;
+          // objLoader needs material information.
+// load a resource
+                //can change dummy.obj to car.obj
+                  objLoader.load('./dummy.obj' ,function(object) {
+                      model = object;
+                      dummy = object;
+                      scene.add(dummy);
+                      if (dummy.material) dummy.material = material;
+
+                      else dummy.children.forEach(function (e) {
+                          e.material = material;
+                      });
+
+                      render(); // may be make a call to your render function
+                  }
+          );
+
+          var gui = new dat.GUI({
+              height : 5 * 32 - 1
+          });
+
+
+
+          gui.add(diffuse, 'r', 0, 1).name("Diffuse Red").onFinishChange(function() {
+              diffusecol.x = diffuse.r;
+              material.dif = diffusecol;
+              material2.color = diffusecol;
+              render();
+          })
+
+          gui.add(diffuse, 'g', 0, 1).name("Diffuse Green").onFinishChange(function() {
+              diffusecol.y = diffuse.g;
+              material.dif = diffusecol;
+              material2.color = diffusecol;
+              render();
+          })
+
+          gui.add(diffuse, 'b', 0, 1).name("Diffuse Blue").onFinishChange(function() {
+              diffusecol.z = diffuse.b;
+              material.dif = diffusecol;
+              material2.color = diffusecol;
+              render();
+          })
+
+          gui.add(specular, 'r', 0, 1).name("Specular Red").onFinishChange(function() {
+              speccol.x = specular.r;
+              material.specC = speccol;
+              material2.specular = speccol;
+              render();
+          })
+
+          gui.add(specular, 'g', 0, 1).name("Specular Green").onFinishChange(function() {
+              speccol.y = specular.g;
+              material.specC = speccol;
+              material2.specular = speccol;
+              render();
+          })
+
+          gui.add(specular, 'b', 0, 1).name("Specular Blue").onFinishChange(function() {
+              speccol.z = specular.b;
+              material.specC = speccol;
+              material2.specular = speccol;
+              render();
+          })
+
+          gui.add(power, 'power', 0, 25).name("Specular Power").onFinishChange(function() {
+              powP.x = power.power;
+              material2.shininess = powP.x;
+              render();
+          })
+
+          gui.add(power, 'power2', 0, 1).name("Reflection Power").onFinishChange(function() {
+              powP2.x = power.power2;
+              render();
+          })
+          gui.add(power, 'powerN', 0, 1).name("Normal Power").onFinishChange(function() {
+              powPN.x = power.powerN;
+              render();
+          })
+          /*gui.add(customSwitch, 'f').name("Use Custom Material").onFinishChange(function() {
+              if(useCustom)
+                  if (dummy.material) dummy.material = material;
+
+                  else dummy.children.forEach(function (e) {
+                      e.material = material;
+                  });
+              else
+              if (dummy.material) dummy.material = material2;
+
+              else dummy.children.forEach(function (e) {
+                  e.material = material2;
+              });
+
+              scene.remove(dummy);
+              scene.add(dummy);
+              render();
+          })
+
+          gui.add(customSwitch, 'g').name("Use Phong Material").onFinishChange(function() {
+              material2.color = diffusecol;
+              material2.specular = speccol;
+              material2.shininess = powP.x;
+              if(useCustom)
+                  if (dummy.material) dummy.material = material;
+
+                  else dummy.children.forEach(function (e) {
+                      e.material = material;
+                  });
+              else
+              if (dummy.material) dummy.material = material2;
+
+              else dummy.children.forEach(function (e) {
+                  e.material = material2;
+              });
+
+              scene.remove(dummy);
+              scene.add(dummy);
+              render();
+          })*/
+        
+        let resize = function () {
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+        };
+
+        window.addEventListener("resize",resize, false)
+       
+        
+      }
+    </script>
+  </head>
+  <body onload="mainFunction();">
+  <h1>--Alexander Scheiner a3594359--</h1>
+  <p>Simple paint dummy model.</p>
+  </body>
+</html>
