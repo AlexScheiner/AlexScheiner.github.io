@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>3D FLOOD FILL</title>
+    <script  src="https://threejs.org/build/three.js"></script>
+    <script  src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src='https://threejs.org/examples/js/libs/dat.gui.min.js'></script>
+    <script  src= "https://threejs.org/examples/js/loaders/OBJLoader.js"> </script>
+    <script src='https://threejs.org/examples/js/libs/dat.gui.min.js'></script>
+    <script src= "https://threejs.org/examples/js/loaders/MTLLoader.js"> </script>
+
+
+    <script>
+
+        /* @ by Alexander Scheiner & Walter Condon
+         * @ Fall 2018
+         * */
+      function mainFunction() {
+          //walter's resolution = 1366x768
+
+          let renderer = new THREE.WebGLRenderer({antialias: true});//let renderer = new THREE.WebGLRenderer();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.setPixelRatio(window.devicePixelRatio);
+
+          renderer.setClearColor(0x888888, 1);
+          document.body.appendChild(renderer.domElement);
+
+          let scene = new THREE.Scene();
+
+          let aspect = window.innerWidth / window.innerHeight;
+          let camera = new THREE.PerspectiveCamera(30, aspect, 0.001, 1000);
+          camera.position.set (0,0,15);
+          scene.add(camera);
+
+          let keyLight = new THREE.DirectionalLight(0xFFFFFF, 1.0);
+          keyLight.position.set(-1, 0.5, 1);
+
+          let fillLight = new THREE.DirectionalLight(0xFFFFFF, 0.5);
+          fillLight.position.set(1, 0, 1);
+
+          let backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+          backLight.position.set(1, -0.5, -1).normalize();
+
+          scene.add(keyLight);
+          scene.add(fillLight);
+          scene.add(backLight);
+          let centerMap = new THREE.TextureLoader().load("MousePointer.png");
+          let centerMaterial = new THREE.SpriteMaterial({map: centerMap, color: 0xffffff});
+          let target = new THREE.Sprite(centerMaterial);
+          target.scale.set(0.15,0.15);
+          scene.add(target);
+
+          let render = function () {
+              renderer.render(scene, camera);
+          };
+          let cameraControls = new THREE.OrbitControls(camera, renderer.domElement);
+          cameraControls.screenSpacePanning = false;
+          cameraControls.enableDamping = true;
+          cameraControls.dampingFactor = 0.55;
+          cameraControls.enablePan = false;
+          //cameraControls.addEventListener("change", render, false);
+          let platesCountX = 8;
+          let platesCountY = 8;
+          let platesCountZ = 8;
+          let baseMaterial = new THREE.MeshPhongMaterial({color: 0XFFFFFF});
+          let hoverMaterial = new THREE.MeshPhongMaterial({color: 0x55FF33});
+          let fillMaterial = new THREE.MeshPhongMaterial({color: 0xff0101});
+          let fillMaterial2 = new THREE.MeshPhongMaterial({color: 0x0101FF});
+          let fillMaterial3 = new THREE.MeshPhongMaterial({color: 0x01FF01});
+          let wallMaterial = new THREE.MeshPhongMaterial({color: 0x222222});
+          let fillColors = new Array({baseMaterial, fillMaterial, fillMaterial2});
+          let fillColor = 1;
+          let plates = new Array(platesCountZ);
+          let fillMap = new Array(platesCountZ);
+          let atShell = 1;
+
+          let cameraDistance = 5.0;
+          let cameraAngle = 0.0;
+          let MouseX;
+          let MouseY;
+          let HoverLink;
+          let selX = 0, selY = 0, selZ = 0;
+          let tempDistance = 999.9;
+          let tempMaterial;
+          let run = true;
+          let waiting = false;
+          /*let target = new THREE.Mesh(new THREE.SphereGeometry(0.0525, 8, 8), new THREE.MeshBasicMaterial({
+              color: 0xff1111,
+              wireframe: true
+          }));*/
+          let hover = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshBasicMaterial({
+              color: 0x55FF33,
+              wireframe: true
+          }));
+          scene.add(target);
+          scene.add(hover);
+          let debug = false;
+          let mode = 0;
+          let held = false;
+
+
+          document.onmousemove = function (e) {
+              MouseX = e.pageX;
+              MouseY = e.pageY;
+
+
+          }
+          function onShift(e){
+              if(e.shiftKey)
+                  held = true;
+              else
+                  held = false;
+
+
+
+          }
+          function update(){
+            if(held){
+                if(mode == 0)
+                    FloodFill(selZ, selX, selY, fillMap[selZ][selX][selY],fillColor);
+                if(mode == 1) {
+                    if (fillMap[selZ][selX][selY] == 0) {
+                        fillMap[selZ][selX][selY] = -1;
+                        plates[selZ][selX][selY].material = wallMaterial;
+                    }
+                }if(mode == 2) {
+                    if(fillMap[selZ][selX][selY] == -1) {
+                        fillMap[selZ][selX][selY] = 0;
+                        plates[selZ][selX][selY].material = baseMaterial;
+                    }
+                    render();
+                }
+            }
+          }
+          window.addEventListener("keydown",  onShift);
+          window.addEventListener("keyup",  onShift);
+          setInterval(function(){
+              if (waiting == false) {
+                  waiting = true;
+                  update()
+                  setTimeout(RayCast(), 150)
+              }
+
+          },15)
+
+
+          var gui = new dat.GUI({
+              height : 5 * 32 - 1,
+              width : 300
+
+          });
+
+          let customSwitch =
+              {
+                  f: function () {
+                      if (mode == 0) {
+                          hover.material.color.set(0x3355FF);
+                          mode = 1;
+                      }
+                      else if(mode == 1){
+                          hover.material.color.set(0xFF5533);
+                          mode = 2;
+                      }
+                      else if(mode == 2) {
+                          hover.material.color.set(0x55FF33);
+                          mode = 0;
+                      }
+                      render();
+                  },
+                  g: function () {
+                      if (fillColor == 1) {
+                          fillColor = 2;
+                      }
+                      else if(fillColor == 2) {
+                          fillColor = 3;
+                      }
+                      else if(fillColor == 3) {
+                          fillColor = 1;
+                      }
+                      render();
+                  }
+              };
+          let reset =
+              {
+                  g: function(){
+
+                      for(i = 0; i<platesCountZ; i++)
+                          for(j = 0; j<platesCountX; j++)
+                              for(k = 0; k<platesCountY; k++)
+                                  if(fillMap[i][j][k] > -2){
+                                      fillMap[i][j][k] = 0;
+                                      plates[i][j][k].material = baseMaterial;
+                                  }
+                      render();
+                  },
+                  e: function(){
+
+                      for(i = 0; i<platesCountZ; i++)
+                          for(j = 0; j<platesCountX; j++)
+                              for(k = 0; k<platesCountY; k++)
+                                  if(fillMap[i][j][k] >= 1){
+                                      fillMap[i][j][k] = 0;
+                                      plates[i][j][k].material = baseMaterial;
+                                  }
+                      render();
+                  },
+                  f: function(){
+
+                      for(i = 0; i<platesCountZ; i++)
+                          for(j = 0; j<platesCountX; j++)
+                              for(k = 0; k<platesCountY; k++)
+                                  if(fillMap[i][j][k] == -1){
+                                      fillMap[i][j][k] = 0;
+                                      plates[i][j][k].material = baseMaterial;
+                                  }
+                      render();
+                  }
+
+              };
+          let modeName = "Mode: Fill";
+          gui.add(customSwitch, 'f').name(modeName).onFinishChange(function() {
+              if(mode == 0)
+                  this.name("Mode: Fill");
+              if(mode == 1)
+                  this.name("Mode: Add Wall");
+              if(mode == 2)
+                  this.name("Mode: Remove Wall");
+          })
+          gui.add(customSwitch, 'g').name("Color: Red").onFinishChange(function() {
+              if(fillColor == 1)
+                  this.name("Color: Red");
+              if(fillColor == 2)
+                  this.name("Color: Blue");
+              if(fillColor == 3)
+                  this.name("Color: Green");
+          })
+
+          gui.add(reset, 'g').name("Reset All").onFinishChange(function() {
+
+          })
+          gui.add(reset, 'e').name("Reset Filled").onFinishChange(function() {
+
+          })
+
+          gui.add(reset, 'f').name("Reset Walls").onFinishChange(function() {
+
+          })
+          //setInterval(RayCast(), 1000);
+
+          function FloodFill(a, b, c, d,e){
+              if(
+                  (a < 0 || a >= platesCountZ)
+                  || (b < 0 || b >= platesCountX)
+                  || (c < 0 || c >= platesCountY)
+                  || fillMap[a][b][c] != d
+                  || d <0
+                  || fillMap[a][b][c] == e
+              ){
+                  return true;
+              }
+              else{
+                  fillMap[a][b][c] = e;
+                  if(e == 1)
+                      plates[a][b][c].material = fillMaterial;
+                  else if(e == 2)
+                      plates[a][b][c].material = fillMaterial2;
+                  else if(e == 3)
+                      plates[a][b][c].material = fillMaterial3;
+                  render();
+                  setTimeout(function(){
+                      FloodFill(a+1, b, c,d,e);
+                      setTimeout(function(){
+                          FloodFill(a-1, b, c,d,e);
+                          setTimeout(function(){
+                              FloodFill(a, b+1, c,d,e);
+                              setTimeout(function(){
+                                  FloodFill(a, b-1, c,d,e);
+                                  setTimeout(function(){
+                                      FloodFill(a, b, c+1,d,e);
+                                      setTimeout(function(){
+                                          FloodFill(a, b, c-1,d,e);``
+
+                                      }, 100);
+                                  }, 100);
+                              }, 100);
+                          }, 100);
+                      }, 100);
+                  }, 100);
+                  return true;
+              }
+
+
+          }
+
+          function RayCast() {
+              let rayPosition;
+              let tempMag;
+              let d = camera.position.x * camera.position.x +
+                  camera.position.y * camera.position.y +
+                  camera.position.z * camera.position.z;
+              d = (d - 2) / 2;
+              tempDistance = 9999;
+              run = true;
+              for (i = 0; run == true; i += 1) {
+
+                  let yaxis = camera.localToWorld(camera.up.clone());
+                  let xaxis = yaxis.clone().cross(camera.position.clone());
+                  let zaxis = yaxis.clone().cross(xaxis.clone());
+                  let zaxisval = yaxis.clone().dot(xaxis.clone());
+                  let aspect = window.innerWidth/window.innerHeight;
+                  let aspectX = aspect*0.5;
+                  let aspectY = aspect*3;
+
+                  MouseX_ = ((MouseX / window.innerWidth)-0.5)*aspectX*0;
+                  MouseY_ = (0.5-(MouseY / window.innerHeight))*aspectY*0;
+                  let mx = MouseX_*xaxis.x + MouseY_*yaxis.x + zaxis.x*zaxisval;
+                  let my = MouseY_*yaxis.y + MouseX_*xaxis.y + zaxis.y*zaxisval;
+                  let mz = MouseY_*yaxis.z + MouseX_*xaxis.z + zaxis.z*zaxisval;
+
+                  let tx = camera.position.x - camera.position.x * i * 0.05 + mx;
+                  let ty = camera.position.y - camera.position.y * i * 0.05 + my;
+                  let tz = camera.position.z - camera.position.z * i * 0.05 + mz;
+                  let cx = tx+camera.position.x * i * 0.05 - mx;
+                  let cy = ty+camera.position.y * i * 0.05 - my;
+                  let cz = tz+camera.position.z * i * 0.05 - mz;
+                  /*if (Math.abs(cx) > Math.abs(cy) && Math.abs(cx) > Math.abs(cz))
+                      tx = Math.max(Math.abs(tx), platesCountX / 2.0 - 0.45) * Math.sign(tx);
+                  else if (Math.abs(cy) > Math.abs(cx) && Math.abs(cy) > Math.abs(cz))
+                      ty = Math.max(Math.abs(ty), platesCountY / 2.0 - 0.45) * Math.sign(ty);
+                  else if (Math.abs(cz) > Math.abs(cy) && Math.abs(cz) > Math.abs(cx))
+                      tz = Math.max(Math.abs(tz), platesCountZ / 2.0 - 0.45) * Math.sign(tz);*/
+
+                  rayPosition = new THREE.Mesh().position.set(
+                      tx,
+                      ty,
+                      tz
+                  );
+                  if (debug == true)
+                      console.log("Position = " + camera.position.x + "\n" + camera.position.y + "\n" + camera.position.z + ".");
+                  if (
+                      (Math.abs(rayPosition.x) < platesCountX * 0.5)
+                      && (Math.abs(rayPosition.y) < platesCountY * 0.5)
+                      && (Math.abs(rayPosition.z) < platesCountZ * 0.5)) {
+
+                      render();
+                      run = false;
+                  }
+                  if(i > 5000)
+                      run = false;
+              }
+              run = true;
+              tempDistance = 9999.0;
+              for (a = 0; a < platesCountZ && run == true; a++) {
+                  for (b = 0; b < platesCountX && run == true; b++) {
+                      for (c = 0; c < platesCountY && run == true ; c++) {
+                          if (((a <= 1 || a >= platesCountZ - 1) || (b <= 1 || b >= platesCountX - 1) || (c <= 1 || c >= platesCountY - 1)) && plates[a][b][c] != null) {
+                              let tempPos = [
+                                  rayPosition.x - (b - platesCountX * 0.5) * 1.0-0.25,
+                                  rayPosition.y - (c - platesCountY * 0.5) * 1.0-0.25,
+                                  rayPosition.z - (a - platesCountZ * 0.5) * 1.0-0.25];
+                              //console.log(tempPos);
+                              tempMag = Math.sqrt(tempPos[0] * tempPos[0] + tempPos[1] * tempPos[1] + tempPos[2] * tempPos[2]);
+                              if ((tempMag < 0.875 && tempMag < tempDistance) && tempMag != null) {
+                                  tempDistance = tempMag+0.1;
+                                  if (selZ != a || selX != b || selY != c) {
+                                      if (fillMap[selZ][selX][selY] == 0)
+                                          plates[selZ][selX][selY].material = baseMaterial;
+                                      if (fillMap[selZ][selX][selY] == -1)
+                                          plates[selZ][selX][selY].material = wallMaterial;
+                                      if(fillMap[selZ][selX][selY] == 1)
+                                          plates[selZ][selX][selY].material = fillMaterial;
+                                  }
+                                  selZ = a;
+                                  selX = b;
+                                  selY = c;
+                                  hover.position.set(plates[a][b][c].position.x,plates[a][b][c].position.y,plates[a][b][c].position.z);
+                                  run = true;
+                                  if (debug == true)
+                                      console.log("Got distance: " + tempMag + ", "+a+b+c);
+                                  //target.position.set(rayPosition.x, rayPosition.y, rayPosition.z);
+                              }
+                              else if (debug == true) {
+                                  console.log("Failed with distance: " + tempMag + " & Minimum: " + tempDistance + ", "+a+b+c);
+                                  run = true;
+                              }
+                              //tempDistance = tempMag;
+
+                          }
+                      }
+                  }
+                  if (plates[selZ][selX][selY] != null) {
+                      tempMaterial = plates[selZ][selX][selY].material;
+                      //plates[selZ][selX][selY].material = hoverMaterial;
+                      tempDistance = 9999;
+
+                      //("Picked Box!");
+
+
+                  }
+
+                  render();
+                  run = true;
+              }
+              tempDistance = 999.9;
+              if (debug == true)
+                  console.log("FinishedLoop at:\n" + rayPosition.x + "\n" + rayPosition.y + "\n" + rayPosition.z + ".");
+              target.position.set((target.position.x*2+rayPosition.x)/3, (target.position.y*2+rayPosition.y)/3, (target.position.z*2+rayPosition.z)/3);
+              render();
+              waiting = false;
+
+          }
+
+
+
+          for( i = 0; i< platesCountZ; i++){
+              plates[i] = new Array(platesCountX);
+              fillMap[i] = new Array(platesCountX);
+
+              for( j = 0; j< platesCountX; j++){
+                  plates[i][j] = new Array(platesCountY);
+                  fillMap[i][j] = new Array(platesCountY);
+
+
+                  for( k = 0; k< platesCountY; k++){
+                      if((i == 0 || i == platesCountZ - 1) || (j == 0 || j == platesCountX -1) || (k == 0 || k == platesCountY -1 ))
+                          atShell = 1;
+                      else
+                          atShell = 0;
+                      if(atShell == 1) {
+                          plates[i][j][k] = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.49, 0.49), baseMaterial);
+                          plates[i][j][k].position.set((j - platesCountX * 0.5) * 0.5+0.25, (k - platesCountY * 0.5) * 0.5+0.25, (i - platesCountZ * 0.5) * 0.5+0.25);
+                          fillMap[i][j][k] = 0;
+
+                          scene.add(plates[i][j][k]);
+                      }
+                      else{
+                          plates[i][j][k] = null;
+                          fillMap[i][j][k] = -2;
+                      }
+
+
+
+
+                  }
+
+
+              }
+
+          }
+          render();
+
+
+
+
+
+          let resize = function () {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+          };
+
+          window.addEventListener("resize",resize, false)
+       
+        
+      }
+    </script>
+  </head>
+  <body onload="mainFunction();">
+  </body>
+</html>
