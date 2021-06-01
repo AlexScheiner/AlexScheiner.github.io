@@ -11,12 +11,7 @@
 
 
     <script>
-
-        /* @ by Alexander Scheiner & Walter Condon
-         * @ Fall 2018
-         * */
       function mainFunction() {
-          //walter's resolution = 1366x768
 
           let renderer = new THREE.WebGLRenderer({antialias: true});//let renderer = new THREE.WebGLRenderer();
           renderer.setSize(window.innerWidth-25, window.innerHeight-25);
@@ -106,10 +101,13 @@
 
           }
           function onShift(e){
-              if(e.shiftKey)
+              if(e.shiftKey || MouseEvent.button == 1)
                   held = true;
               else
+			  {
                   held = false;
+				  customSwitch.g();
+			  }
 
 
 
