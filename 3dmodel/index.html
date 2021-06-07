@@ -98,7 +98,7 @@
 
         let aspect = window.innerWidth / window.innerHeight;
         let camera = new THREE.PerspectiveCamera( 30, aspect, 1, 1000 );
-        camera.position.z = 5;
+        camera.position.z = 12;
         scene.add(camera);
 
         let keyLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -201,7 +201,7 @@
 
 
 
-          scene.background = textureCube;
+          //scene.background = textureCube;
           // objLoader needs material information.
 // load a resource
                 //can change dummy.obj to car.obj
