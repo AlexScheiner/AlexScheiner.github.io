@@ -17,6 +17,10 @@ p  {
 	display: table-cell;
 	horizontal-align: right;
 }
+span.embeds{
+	display: inline-block;
+	white-space: nowrap;
+	}
 body {
 	overflow: hidden;
 	}
@@ -31,8 +35,10 @@ body {
 		  <td height="120px" width="100%">
 			  <table width="150%" height="80px">
 				<tr>
-					<embed src="contact.html" height="45px"></embed>
-			  		<embed src="gallery.html" height="45px"></embed>
+					<span class="embeds">
+						<embed src="contact.html" height="45px"></embed>
+			  			<embed src="gallery.html" height="45px"></embed>
+	  				</span>
 				</tr>
 				<tr>
 					<div class="verticalcenter"><p>Software Engineer Based</br> in Sunny Central Florida</p></div>
