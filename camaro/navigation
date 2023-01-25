@@ -1,0 +1,45 @@
+<html>
+  <head>
+    <style>
+    <style>
+h1  {
+  color: black;
+  font-family: Verdana;
+  font-size: 30px;
+}
+h3  {
+  color: black;
+  font-family: Verdana;
+  font-size: 20px;
+}
+p  {
+  color: black;
+  font-family: Verdana;
+  line-height: 1.4;
+  font-size: 17px;
+}
+h2  {
+  color: black;
+  font-family: Verdana;
+  font-size: 24px;
+}
+.verticalcenter {
+    display: table-cell;
+    vertical-align: middle;
+}
+.verticaltop {
+    display: table-cell;
+    valign: top;
+}
+    .graphics {
+        width: 70%;
+    }
+    </style>
+  <h1 width="100%">
+        <a href="/camaro">ALL</a>
+        <a href="/camaro/2023">2023</a>
+        <a href="/camaro/2022">2022</a>
+        <a href="/camaro/2021">2021</a>
+      </h1>
+      </body>
+      </html>
