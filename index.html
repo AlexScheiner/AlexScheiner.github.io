@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#grad1 {
+  height: 540px;
+  width: 960px;
+  background-color: #74e1e8; /* For browsers that do not support gradients */
+  background-image: linear-gradient(to bottom right, #e474e8, #74e1e8);
+  box-shadow: 12px 12px #9a9a9a;
+  border-radius: 20% / 20% 50% 65%;
+}
+#grad2 {
+  background-size: cover;
+  background-repeat: repeat;
+  height:16px;
+  background-color: #d7d7d7; /* For browsers that do not support gradients */
+  background-image: linear-gradient(to bottom left, #d7d7d7, #c7c7c7);
+
+}
+#top1 {
+  height: 240px;
+  background-image: url('top.svg');
+  border-radius: 24px;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.t1 {
+  font-family: "Franklin Gothic Heavy", Copperplate, Arial, sans-serif;
+  color: white;
+  text-shadow: 2px 2px #4a4a4a;
+}
+.button {
+  background-color: #04AA6D; /* Green */
+  border: none;
+  border-radius: 32px;
+  color: white;
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.2s;
+  cursor: pointer;
+  box-shadow: 4px 4px #4a4a4a;
+  text-shadow: 0px 0px #4a4a4a;
+}
+.button1 {
+  background-color: transparent; 
+  color: black; 
+  border: 2px solid #4c2369;
+  transform: translateX(4px) translateY(4px);
+  box-shadow: 0px 0px #4a4a4a;
+}
+
+.button1:hover {
+  background-color: #4c2369;
+  transform: translateX(0px) translateY(0px);
+  box-shadow: 4px 4px #4a4a4a;
+  color: white;
+}
+.button1:active {
+  transform: translateX(2px) translateY(2px);
+  background-color: #5d496b;
+  box-shadow: 2px 2px #4a4a4a;
+}
+.center {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+</style>
+</style>
+</head>
+<center>
+<body id="grad2"">
+	<div id="grad1" class="center" style="text-align: left">
+		<div id="top1">
+			<img src="name.svg" width="70%"/>
+		</div>
+		<table>
+			<tr>
+				<td width="20px" />
+				<td>
+					<img src="portrait.png" width="150px"/>
+				</td>
+				<td>
+					<h1 class="t1">Alex Scheiner</h1>
+					<p class="t1">Software Engineer</br>Graphic Artist</br>Web Designer</br></p>
+				</td>
+				<td width="0px" />
+				<td>
+					<h2 class="t1" style="text-align: center;">My Favorites</h2>
+					<table>
+						<tr>
+							<td>
+								<ul class="t1">
+									<li>Color: Purple</li>
+									<li>Book: Alice in Wonderland</li>
+									<li>Movie: The Last Unicorn</li>
+									<li>Activity: Skateboarding</li>
+								</ul>
+							</td>
+							<td>
+								<ul class="t1">
+									<li>Videogame: Kingdoms of Amalur</li>
+									<li>Monster Flavor: Mango Loco</li>
+									<li>Motorsport: Rally</li>
+									<li>Band: We Are The Union</li>
+								</ul>
+							</td>
+						</tr>
+					</table>
+				</td>
+				<td width="10px" />
+			</tr>
+		</table>
+		<p class="t1" style="text-align: center;">Send me an email <a href="mailto:alexscheinerdev+contactmeonline@gmail.com" target="_blank"<button class="button button1 t1">Email Me</buton></a> or reach out over Linkedin <a href="https://www.linkedin.com/in/alexander-scheiner-7a872aaa/" target="_blank"><button class="button button1 t1">My Linkedin</button></a></p>
+	</div>
+
+</body>
+</center>
+</html>
+
